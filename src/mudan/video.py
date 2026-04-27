@@ -1,8 +1,7 @@
-# video.py
 import os
 from PySide6.QtCore import QObject, Signal, Qt
 from PySide6.QtGui import QImage, QPainter, QColor, QPixmap
-from config import logger
+from .config import logger
 
 # 注意：此处使用了全局变量 WINDOW_SIZE，
 # 建议在 main.py 中计算屏幕尺寸后赋值给该变量

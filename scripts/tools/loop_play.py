@@ -10,7 +10,7 @@ def loop_play(file_path):
 
 if __name__ == "__main__":
     start_time = time.time()
-    mp3_filename = Path('utils/sovice_question')
+    mp3_filename = Path('assets/audio/sovice_question')
     print(mp3_filename)
     mp3_list = list(mp3_filename.glob('*.mp3'))
     for mp3_ in  mp3_list:

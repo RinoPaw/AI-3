@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panda-mudan"
+version = "0.1.0"
+description = "Local digital human dialogue demo with ASR, RAG, LLM response, and TTS."
+readme = "README.MD"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[project.scripts]
+mudan = "mudan.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }

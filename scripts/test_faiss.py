@@ -1,8 +1,16 @@
 import time
+from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src"
+if str(SRC) not in sys.path:
+    sys.path.insert(0, str(SRC))
 
 print("开始导入 FaissVectorStore...")
-from vector_store import FaissVectorStore
-from config import EMBEDDING_MODEL_PATH, FAISS_INDEX_PATH, FAISS_DATA_PATH
+from mudan.vector_store import FaissVectorStore
+from mudan.config import EMBEDDING_MODEL_PATH, FAISS_INDEX_PATH, FAISS_DATA_PATH
 
 print("开始初始化数据库...")
 start = time.time()

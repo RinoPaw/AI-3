@@ -92,10 +92,10 @@ async def main():
     
     # 示例1：直接播放
     # await synthesizer.synthesize("你好，我是熊猫田田")
-    # with open("./utils/final_result_input.txt", 'r', encoding='utf-8') as f:
+    # with open("./data/final_result_input.txt", 'r', encoding='utf-8') as f:
     #     count = 0
-    #     if not os.path.exists("./utils/sovice_question"):
-    #         os.makedirs("./utils/sovice_question")
+    #     if not os.path.exists("./assets/audio/sovice_question"):
+    #         os.makedirs("./assets/audio/sovice_question")
     #     for line in f.readlines():
     #         # 示例2：保存到文件
     #         name = choice(list_data)
@@ -104,12 +104,12 @@ async def main():
     #         await synthesizer.synthesize(
     #             line,
     #             voice_name=name,
-    #             output_file=f"./utils/sovice_question/thinking_question_{count}.mp3"
+    #             output_file=f"./assets/audio/sovice_question/thinking_question_{count}.mp3"
     #         )
     await synthesizer.synthesize(
                 "已打断",
                 voice_name="晓晓",
-                output_file=f"audio/interupt.mp3"
+                output_file=f"assets/audio/interupt.mp3"
             )
 
 if __name__ == "__main__":

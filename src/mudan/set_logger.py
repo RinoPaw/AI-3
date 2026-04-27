@@ -3,14 +3,21 @@ import logging
 import logging.config
 from datetime import datetime
 import time
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 def setup_logging():
     # 确保logs目录存在
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
+    log_dir = PROJECT_ROOT / "logs"
+    if not log_dir.exists():
+        log_dir.mkdir(parents=True)
     
-    log_filename = time.strftime('logs/mudan_%Y-%m-%d_%H-%M-%S.log')
+    log_filename = (log_dir / time.strftime('mudan_%Y-%m-%d_%H-%M-%S.log')).as_posix()
     # 加载日志配置
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logger.ini')
+    config_path = PROJECT_ROOT / 'logger.ini'
     logging.config.fileConfig(config_path, defaults={'log_filename': log_filename})
     logger = logging.getLogger('appLogger')
     
@@ -26,9 +33,13 @@ def get_logger():
 
 # 当目录文件数超过以前的，删除以前的文件
 def delete_old_log_files(directory):
-    if os.path.exists(directory):
-        files = os.listdir(directory)
+    target = Path(directory)
+    if not target.is_absolute():
+        target = PROJECT_ROOT / target
+
+    if target.exists():
+        files = os.listdir(target)
         files.sort()
         if len(files) > 10:
             for file in files[:-10]:
-                os.remove(os.path.join(directory, file))
+                os.remove(target / file)

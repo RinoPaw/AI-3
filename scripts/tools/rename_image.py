@@ -5,7 +5,7 @@ import json
 
 def rename_files():
     # 获取wav和jsons目录下的所有文件
-    wav_dir = Path('process/wait/breath')
+    wav_dir = Path('assets/animations/wait/breath')
     # json_dir = Path('jsons')
     
     # 获取所有wav文件

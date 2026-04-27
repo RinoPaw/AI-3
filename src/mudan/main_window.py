@@ -4,11 +4,11 @@ import random
 from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel,  QPushButton, QHBoxLayout, QScrollArea, QSizePolicy
 from PySide6.QtCore import Qt, QTimer, QSize, QEvent, QUrl, Signal, Slot
 from PySide6.QtGui import QImage, QPixmap, QPainter, QColor, QFont, QIcon
-from video import VideoStream
-from config import FRAME_DIR_GREET, FRAME_DIR_FAREWELL, FRAME_DIR_IDLE,  FRAME_DIR_SPEAK, ICON_NO_HEAR, ICON_HEAR, ICON_INTERRUPT, ICON_CLOSE, logger, BACKGROUND_IMAGE, HTML_PATH
-from speech_controller import run_speech_loop, question_queue_stream, choose, is_connected, speech_lock
+from .video import VideoStream
+from .config import FRAME_DIR_GREET, FRAME_DIR_FAREWELL, FRAME_DIR_IDLE, FRAME_DIR_SPEAK, ICON_NO_HEAR, ICON_HEAR, ICON_INTERRUPT, ICON_CLOSE, logger, BACKGROUND_IMAGE, HTML_PATH
+from .speech_controller import run_speech_loop, question_queue_stream, choose, is_connected, speech_lock
 import queue
-from dialog_service import speak_online_prompt_tts, text_queue, summary
+from .dialog_service import speak_online_prompt_tts, text_queue, get_summary
 import pygame
 import math
 import os
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
         如果以后要切回全屏，在 config.py 里加：
             DEBUG_WINDOW = False
         """
-        import config as app_config
+        from . import config as app_config
 
         debug_mode = getattr(app_config, "DEBUG_WINDOW", True)
 
@@ -642,11 +642,11 @@ class MainWindow(QMainWindow):
         if self.recognizing:
             self.button = False
             self.set_recognition_icon(False)
-            # self.add_icon("icon//hear.png")
+            # self.add_icon("assets/icons/hear.png")
             self.stop_recognition()
         else:
             self.button = False
-            # self.add_icon("icon//no_hear.png")
+            # self.add_icon("assets/icons/no_hear.png")
             self.set_recognition_icon(True)
             self.start_recognition()
 
@@ -996,7 +996,7 @@ class RotatingButtonsWidget(QWidget):
                 label.setAlignment(Qt.AlignLeft)
                 label.setFixedSize(label_width, label_height)
                 # 添加悬停提示
-                label.setToolTip(f"{summary[title]}")
+                label.setToolTip(str(get_summary().get(title, "")))
                 # 安装事件过滤器以处理鼠标悬停事件
                 label.installEventFilter(self)
                 self.mainwindow.text_layout.addWidget(label)

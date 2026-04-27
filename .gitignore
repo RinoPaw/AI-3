@@ -38,8 +38,8 @@ models/
 data/faiss_data/faiss_index.index
 
 # Optional: generated media frames (uncomment if needed)
-# process/*/
-# process/*/*/
+# assets/animations/*/
+# assets/animations/*/*/
 
 # Local secrets / environment
 .env

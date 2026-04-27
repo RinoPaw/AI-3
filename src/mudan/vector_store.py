@@ -6,7 +6,7 @@ import faiss
 import jieba
 from sentence_transformers import SentenceTransformer
 
-from config import FAISS_KEYWORD_PATH, logger
+from .config import FAISS_KEYWORD_PATH, logger
 
 
 class FaissVectorStore:
@@ -312,13 +312,13 @@ FaissDB = FaissVectorStore
 
 
 if __name__ == "__main__":
-    from config import EMBEDDING_MODEL_PATH, FAISS_INDEX_PATH
+    from .config import EMBEDDING_MODEL_PATH, FAISS_INDEX_PATH
 
     try:
-        from config import FAISS_DATA_PATH
+        from .config import FAISS_DATA_PATH
         data_path = FAISS_DATA_PATH
     except ImportError:
-        from config import JSONL_DATA_PATH
+        from .config import JSONL_DATA_PATH
         data_path = JSONL_DATA_PATH
 
     db = FaissVectorStore(

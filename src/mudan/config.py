@@ -1,13 +1,28 @@
-# config.py
 import json
 import os
 import sys
-from set_logger import setup_logging
+from pathlib import Path
+
+from .set_logger import setup_logging
+
+
+PACKAGE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_DIR.parents[1]
+LEGACY_RESOURCE_PREFIXES = {
+    "audio/": "assets/audio/",
+    "icon/": "assets/icons/",
+    "process/": "assets/animations/",
+    "heritage/heritage/": "web/heritage/",
+    "heritage/": "web/heritage/",
+    "web_front/": "web/front/",
+    "utils/sovice_question/": "assets/audio/sovice_question/",
+    "utils/": "scripts/tools/",
+}
 
 
 def _load_dotenv_if_exists(file_name: str = ".env") -> None:
     """Load .env into process env without external dependencies."""
-    env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), file_name)
+    env_path = PROJECT_ROOT / file_name
     if not os.path.exists(env_path):
         return
 
@@ -40,31 +55,50 @@ def _env_path(name: str, default_relative_path: str) -> str:
     return resource_path(_env(name, default_relative_path))
 
 
+def _migrate_legacy_resource_path(relative_path: str) -> str | None:
+    normalized = relative_path.replace("\\", "/")
+    for old_prefix, new_prefix in LEGACY_RESOURCE_PREFIXES.items():
+        if normalized.startswith(old_prefix):
+            return new_prefix + normalized[len(old_prefix):]
+    return None
+
+
 def resource_path(relative_path: str) -> str:
     """获取资源文件的绝对路径"""
+    path = Path(relative_path)
+    if path.is_absolute():
+        return str(path)
+
     try:
         # 首先尝试获取 PyInstaller 的临时路径
         if hasattr(sys, "_MEIPASS"):
-            base_path = sys._MEIPASS
+            base_path = Path(sys._MEIPASS)
             logger.info(f"Using PyInstaller temporary path: {base_path}")
         else:
-            # 如果不是打包环境，使用当前目录
-            base_path = os.path.dirname(os.path.abspath(__file__))
+            # 如果不是打包环境，使用项目根目录
+            base_path = PROJECT_ROOT
     except Exception as e:
-        # 如果出现任何异常，使用当前目录
-        base_path = os.path.dirname(os.path.abspath(__file__))
-        logger.info(f"Use current directory as base path: {base_path}")
+        # 如果出现任何异常，回退到项目根目录
+        base_path = PROJECT_ROOT
+        logger.info(f"Use project root as base path: {base_path}")
         logger.exception(f"Exception: {str(e)}")
 
-    full_path = os.path.join(base_path, relative_path)
-    if not os.path.exists(full_path):
+    full_path = base_path / relative_path
+    if not full_path.exists():
+        migrated_path = _migrate_legacy_resource_path(relative_path)
+        if migrated_path:
+            migrated_full_path = base_path / migrated_path
+            if migrated_full_path.exists():
+                logger.info(f"Legacy resource path migrated: {relative_path} -> {migrated_path}")
+                return str(migrated_full_path)
+
         logger.warning(f"Warning: File does not exist: {full_path}")
         # 尝试在当前目录下查找
-        current_dir_path = os.path.join(os.getcwd(), relative_path)
-        if os.path.exists(current_dir_path):
+        current_dir_path = Path.cwd() / relative_path
+        if current_dir_path.exists():
             logger.info(f"File found in current directory: {current_dir_path}")
-            return current_dir_path
-    return full_path
+            return str(current_dir_path)
+    return str(full_path)
 
 
 def _load_xf_api_configs() -> list[dict]:
@@ -125,7 +159,7 @@ _load_dotenv_if_exists()
 logger = setup_logging()
 
 # 基础路径
-BASE_PATH = os.path.abspath(".")
+BASE_PATH = str(PROJECT_ROOT)
 
 # 模型相关路径
 VOSK_MODEL_PATH = _env_path("VOSK_MODEL_PATH", "models/vosk-model-cn-0.22")
@@ -140,33 +174,33 @@ FAISS_DATA_PATH = _env_path("FAISS_DATA_PATH", "data/faiss_data/faiss_data.json"
 FAISS_KEYWORD_PATH = _env_path("FAISS_KEYWORD_PATH", "data/faiss_data/my_keywords.json")
 
 # 音频文件路径
-AUDIO_HELLO_PATH = _env_path("AUDIO_HELLO_PATH", "audio/hello.mp3")
-AUDIO_GOODBYE_PATH = _env_path("AUDIO_GOODBYE_PATH", "audio/goodbye.mp3")
-AUDIO_INTERRUPT_PATH = _env_path("AUDIO_INTERRUPT_PATH", "audio/interupt.mp3")
+AUDIO_HELLO_PATH = _env_path("AUDIO_HELLO_PATH", "assets/audio/hello.mp3")
+AUDIO_GOODBYE_PATH = _env_path("AUDIO_GOODBYE_PATH", "assets/audio/goodbye.mp3")
+AUDIO_INTERRUPT_PATH = _env_path("AUDIO_INTERRUPT_PATH", "assets/audio/interupt.mp3")
 # 兼容旧命名
 AUDIO_INTERUPT_PATH = AUDIO_INTERRUPT_PATH
-AUDIO_NO_SPEAK_PATH = _env_path("AUDIO_NO_SPEAK_PATH", "audio/no_speak.mp3")
-AUDIO_THINKING_PATH = _env_path("AUDIO_THINKING_PATH", "audio/thinking.mp3")
-AUDIO_BRAIN_SHORT_PATH = _env_path("AUDIO_BRAIN_SHORT_PATH", "audio/brain_short.mp3")
-AUDIO_NO_RETRIVAL_PATH = _env_path("AUDIO_NO_RETRIVAL_PATH", "audio/no_retrival.mp3")
+AUDIO_NO_SPEAK_PATH = _env_path("AUDIO_NO_SPEAK_PATH", "assets/audio/no_speak.mp3")
+AUDIO_THINKING_PATH = _env_path("AUDIO_THINKING_PATH", "assets/audio/thinking.mp3")
+AUDIO_BRAIN_SHORT_PATH = _env_path("AUDIO_BRAIN_SHORT_PATH", "assets/audio/brain_short.mp3")
+AUDIO_NO_RETRIVAL_PATH = _env_path("AUDIO_NO_RETRIVAL_PATH", "assets/audio/no_retrival.mp3")
 
 # 动画帧路径
-FRAME_DIR_GREET = _env_path("FRAME_DIR_GREET", "process/greet/0/")
-FRAME_DIR_IDLE = _env_path("FRAME_DIR_IDLE", "process/idle/0/")
-FRAME_DIR_SPEAK = _env_path("FRAME_DIR_SPEAK", "process/speak/0/")
-FRAME_DIR_FAREWELL = _env_path("FRAME_DIR_FAREWELL", "process/farewell/0/")
-FRAME_DIR_THANK = _env_path("FRAME_DIR_THANK", "process/thank/0/")
+FRAME_DIR_GREET = _env_path("FRAME_DIR_GREET", "assets/animations/greet/0/")
+FRAME_DIR_IDLE = _env_path("FRAME_DIR_IDLE", "assets/animations/idle/0/")
+FRAME_DIR_SPEAK = _env_path("FRAME_DIR_SPEAK", "assets/animations/speak/0/")
+FRAME_DIR_FAREWELL = _env_path("FRAME_DIR_FAREWELL", "assets/animations/farewell/0/")
+FRAME_DIR_THANK = _env_path("FRAME_DIR_THANK", "assets/animations/thank/0/")
 
 # icon图标路径
-ICON_CLOSE = _env_path("ICON_CLOSE", "icon/close.png")
-ICON_HEAR = _env_path("ICON_HEAR", "icon/hear.png")
-ICON_NO_HEAR = _env_path("ICON_NO_HEAR", "icon/no_hear.png")
-ICON_INTERRUPT = _env_path("ICON_INTERRUPT", "icon/interupt.png")
+ICON_CLOSE = _env_path("ICON_CLOSE", "assets/icons/close.png")
+ICON_HEAR = _env_path("ICON_HEAR", "assets/icons/hear.png")
+ICON_NO_HEAR = _env_path("ICON_NO_HEAR", "assets/icons/no_hear.png")
+ICON_INTERRUPT = _env_path("ICON_INTERRUPT", "assets/icons/interupt.png")
 # 兼容旧命名
 ICON_INTERUPT = ICON_INTERRUPT
 
 # 背景图片路径
-BACKGROUND_IMAGE = _env_path("BACKGROUND_IMAGE", "icon/background(1).jpg")
+BACKGROUND_IMAGE = _env_path("BACKGROUND_IMAGE", "assets/icons/background(1).jpg")
 
 # 本地模型名称
 LOCAL_MODEL = _env("LOCAL_MODEL", "llama3.2")
@@ -179,4 +213,4 @@ ZHIPU_API_KEY = _env("ZHIPU_API_KEY", "")
 ZHIPU_MODEL = _env("ZHIPU_MODEL", "glm-4.5-flash")
 
 # 知识图谱
-HTML_PATH = _env_path("HTML_PATH", "heritage/templates/index.html")
+HTML_PATH = _env_path("HTML_PATH", "web/heritage/templates/index.html")

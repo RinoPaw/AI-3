@@ -1,12 +1,22 @@
 # say.py
 import asyncio
 import io
+import json
 import os
 import queue
 import re
 import tempfile
 import threading
 import time
+import warnings
+
+os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API.*",
+    category=UserWarning,
+)
+warnings.filterwarnings("ignore", category=SyntaxWarning)
 
 import edge_tts
 import pygame
@@ -14,9 +24,8 @@ import pyttsx3
 import requests
 from zhipuai import ZhipuAI
 
-import config
-from config import logger
-from vector_store import FaissVectorStore
+from . import config
+from .config import logger
 
 
 # === 基础配置 ===
@@ -28,7 +37,7 @@ AUDIO_CHANNELS = 1
 CHUNK = 4000
 NO_SPEECH_THRESHOLD = 3
 
-SUMMARY_PATH = "./data/faiss_data/summary/summary_final.json"
+SUMMARY_PATH = config.resource_path("data/faiss_data/summary/summary_final.json")
 
 headers = {
     "user-agent": (
@@ -41,14 +50,44 @@ headers = {
 text_queue = queue.Queue()
 
 
-# === 初始化 FAISS 数据库 ===
-faiss_db = FaissVectorStore(
-    model_path=config.EMBEDDING_MODEL_PATH,
-    index_path=config.FAISS_INDEX_PATH,
-    json_path=config.FAISS_DATA_PATH,
-)
+_faiss_db = None
+summary = None
 
-summary = faiss_db.load_data(SUMMARY_PATH)
+
+def get_summary() -> dict:
+    """Load summary metadata without initializing the embedding model."""
+    global summary
+
+    if summary is None:
+        try:
+            with open(SUMMARY_PATH, mode="r", encoding="utf-8") as f:
+                summary = json.load(f)
+        except FileNotFoundError:
+            logger.warning(f"Summary file does not exist: {SUMMARY_PATH}")
+            summary = {}
+        except Exception as e:
+            logger.exception(f"Failed to load summary file: {e}")
+            summary = {}
+
+    return summary
+
+
+def get_faiss_db():
+    """Lazily initialize FAISS so the desktop UI can start quickly."""
+    global _faiss_db, summary
+
+    if _faiss_db is None:
+        logger.info("Initializing FAISS vector store")
+        from .vector_store import FaissVectorStore
+
+        _faiss_db = FaissVectorStore(
+            model_path=config.EMBEDDING_MODEL_PATH,
+            index_path=config.FAISS_INDEX_PATH,
+            json_path=config.FAISS_DATA_PATH,
+        )
+        get_summary()
+
+    return _faiss_db
 
 
 def is_connected():
@@ -304,6 +343,7 @@ def build_prompt(question: str, mainwindow):
     """
     从 FAISS 检索相关非遗资料，并构造给大模型的 prompt。
     """
+    faiss_db = get_faiss_db()
     results = faiss_db.query(question, n_results=2)
     context = "\n\n".join(results["documents"]) if results["documents"] else ""
 

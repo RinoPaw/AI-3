@@ -8,7 +8,16 @@ import time
 import asyncio
 import threading
 import queue
+import os
+import warnings
 from urllib.parse import urlencode
+
+os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+warnings.filterwarnings(
+    "ignore",
+    message="pkg_resources is deprecated as an API.*",
+    category=UserWarning,
+)
 
 import numpy as np
 import pyaudio
@@ -16,7 +25,7 @@ import websocket
 import pygame
 import vosk
 
-from dialog_service import (
+from .dialog_service import (
     initialize_engine,
     speak,
     message,
@@ -24,8 +33,8 @@ from dialog_service import (
     build_prompt,
     is_connected,
 )
-import config
-from config import logger
+from . import config
+from .config import logger
 
 
 # === 全局队列与锁 ===
