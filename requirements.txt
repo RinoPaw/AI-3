@@ -1,0 +1,17 @@
+PySide6>=6.9,<7
+Flask>=3.0,<4
+pygame>=2.6,<3
+edge-tts>=7.0,<8
+pyttsx3>=2.98,<3
+requests>=2.32,<3
+websocket-client>=1.8,<2
+vosk>=0.3.45,<0.4
+PyAudio>=0.2.14,<0.3
+faiss-cpu>=1.10,<2
+sentence-transformers>=4.1,<5
+jieba>=0.42,<0.43
+zhipuai>=2.1,<3
+numpy>=2.2,<3
+torch>=2.6,<3
+transformers>=4.51,<5
+sniffio>=1.3,<2

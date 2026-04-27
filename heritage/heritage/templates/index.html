@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="utf-8">
+    <title>非遗知识图谱</title>
+
+    <!-- Google 字体 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- 外部依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/neo4j-driver@5.14.0/lib/browser/neo4j-web.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/neovis.js@2.0.2/dist/neovis.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6c8fc7;
+            --background-color: #020B1C;
+            --text-color: #fff;
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            position: relative;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* 星空背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .stars::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: stars 20s linear infinite;
+            background-image:
+                radial-gradient(1px 1px at 25% 25%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(1px 1px at 50% 50%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 75% 75%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 100% 100%, white, rgba(0, 0, 0, 0));
+            background-size: 250px 250px;
+            background-repeat: repeat;
+            opacity: 0.3;
+        }
+
+        .stars::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: stars 30s linear infinite;
+            background-image:
+                radial-gradient(1px 1px at 10% 10%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 30% 30%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(1px 1px at 60% 60%, white, rgba(0, 0, 0, 0)),
+                radial-gradient(2px 2px at 90% 90%, white, rgba(0, 0, 0, 0));
+            background-size: 200px 200px;
+            background-repeat: repeat;
+            opacity: 0.4;
+            transform: rotate(30deg);
+        }
+
+        @keyframes stars {
+            from {
+                transform: translateY(0);
+            }
+
+            to {
+                transform: translateY(-250px);
+            }
+        }
+
+        .navbar {
+            background: rgba(2, 11, 28, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 0.8rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            height: 50px;
+        }
+
+        .navbar-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+            text-shadow: 0 0 10px rgba(108, 143, 199, 0.5);
+        }
+
+        .main-content {
+            height: 100vh;
+            padding: 0;
+            margin: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        #viz {
+            width: 100%;
+            height: calc(100vh - 50px);
+            margin-top: 50px;
+            background: transparent;
+            position: relative;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(2, 11, 28, 0.9);
+            color: var(--text-color);
+            padding: 0.8rem 1.2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 20px rgba(108, 143, 199, 0.2);
+            border: 1px solid rgba(108, 143, 199, 0.3);
+            backdrop-filter: blur(5px);
+            display: none;
+            z-index: 1000;
+            font-size: 0.9rem;
+            max-width: 250px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="stars"></div>
+    <nav class="navbar">
+        <div class="navbar-content">
+            <div class="logo">河南非遗知识图谱</div>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div id="viz"></div>
+    </div>
+
+    <div class="tooltip" id="node-tooltip"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const config = {
+                containerId: "viz",
+                neo4j: {
+                    serverUrl: "bolt://localhost:7687",
+                    serverUser: "neo4j",
+                    serverPassword: "12345678",
+                    driverConfig: {
+                        maxConnectionPoolSize: 50,
+                        connectionAcquisitionTimeout: 30000,
+                        maxTransactionRetryTime: 30000
+                    }
+                },
+                labels: {
+                    Center: {
+                        label: "name",
+                        size: 60,
+                        color: {
+                            background: "#E50012",
+                            border: "#fff",
+                            highlight: { background: "#FF1F1F", border: "#fff" }
+                        },
+                        font: { size: 18, color: "#fff", face: "Noto Sans SC" },
+                        borderWidth: 2,
+                        shape: "circle"
+                    },
+                    Sort: {
+                        label: "name",
+                        size: 45,
+                        color: {
+                            background: "rgba(108, 143, 199, 0.9)",
+                            border: "#fff",
+                            highlight: { background: "rgba(108, 143, 199, 1)", border: "#fff" }
+                        },
+                        font: { size: 16, color: "#fff", face: "Noto Sans SC" },
+                        borderWidth: 2,
+                        shape: "circle"
+                    },
+                    Title: {
+                        label: "name",
+                        size: 30,
+                        color: {
+                            background: "rgba(141, 167, 215, 0.8)",
+                            border: "#fff",
+                            highlight: { background: "rgba(141, 167, 215, 1)", border: "#fff" }
+                        },
+                        font: { size: 14, color: "#fff", face: "Noto Sans SC" },
+                        borderWidth: 1,
+                        shape: "dot"
+                    }
+                },
+                relationships: {
+                    "include": {
+                        thickness: 2,
+                        color: {
+                            color: "rgba(255, 255, 255, 0.3)",
+                            highlight: "rgba(255, 255, 255, 0.8)"
+                        },
+                        arrows: { to: { enabled: true, scaleFactor: 0.5 } }
+                    }
+                },
+                initialCypher: "MATCH (h:Center),(k:Sort) OPTIONAL MATCH (h)-[r:include]-(k) RETURN h,r,k"
+            };
+
+            const viz = new NeoVis.default(config);
+
+            viz.registerOnEvent("completed", () => {
+                console.log("✅ 图谱渲染完成！");
+                const network = viz.network;
+                const tooltip = document.getElementById('node-tooltip');
+
+                network.setOptions({
+                    physics: {
+                        enabled: true,
+                        barnesHut: {
+                            gravitationalConstant: -2000,
+                            centralGravity: 0.15,
+                            springLength: 400,
+                            springConstant: 0.05,
+                            damping: 0.2,
+                            avoidOverlap: 0.5
+                        },
+                        stabilization: {
+                            enabled: true,
+                            iterations: 2000,
+                            updateInterval: 25,
+                            fit: true
+                        },
+                        minVelocity: 0.5,
+                        maxVelocity: 15
+                    },
+                    layout: {
+                        improvedLayout: true,
+                        hierarchical: {
+                            enabled: false,
+                            direction: 'UD',
+                            sortMethod: 'directed',
+                            nodeSpacing: 250,
+                            levelSeparation: 300
+                        }
+                    },
+                    nodes: {
+                        fixed: {
+                            x: false,
+                            y: false
+                        },
+                        shape: 'dot',
+                        size: 25,
+                        mass: 2,
+                        widthConstraint: {
+                            minimum: 50,
+                            maximum: 150
+                        }
+                    },
+                    edges: {
+                        smooth: {
+                            type: 'continuous',
+                            roundness: 0.5
+                        },
+                        length: 400
+                    },
+                    interaction: {
+                        navigationButtons: false,
+                        keyboard: true,
+                        zoomView: true,
+                        dragView: true,
+                        hover: true,
+                        multiselect: false,
+                        selectable: true,
+                        selectConnectedEdges: false,
+                        hoverConnectedEdges: true
+                    }
+                });
+
+                // 悬停显示信息
+                network.on("hoverNode", function (params) {
+                    const node = network.body.data.nodes.get(params.node);
+                    tooltip.style.display = 'block';
+                    tooltip.style.left = params.pointer.DOM.x + 10 + 'px';
+                    tooltip.style.top = params.pointer.DOM.y + 10 + 'px';
+                    tooltip.innerHTML = `<strong>${node.label}</strong><br>类型: ${node['raw']['labels'][0]}`;
+                });
+
+                network.on("blurNode", function () {
+                    tooltip.style.display = 'none';
+                });
+
+                // 双击 Kind 节点追加 HeritageItem
+                network.on("doubleClick", async function (params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        const node = network.body.data.nodes.get(nodeId);
+                        console.log("✅ 双击节点:", node);
+
+                        console.log("✅ 节点类型:", node['raw']['labels'][0]);
+                        if (node['raw']['labels'][0] === "Sort") {
+                            const driver = neo4j.driver(
+                                "bolt://localhost:7687",
+                                neo4j.auth.basic("neo4j", "12345678")
+                            );
+
+                            const session = driver.session();
+                            console.log("✅ 开始查询非遗项目");
+
+                            try {
+                                const cypher = `
+                                    MATCH (k:Sort {name: $kindName})-[r:include]->(i:Title)
+                                    RETURN i, r
+                                `;
+                                console.log("✅ 执行查询:", cypher);
+
+                                const result = await session.run(cypher, { kindName: node.label });
+
+                                // 记录当前点击的节点位置
+                                const clickedNodePosition = network.getPosition(nodeId);
+
+                                result.records.forEach(record => {
+                                    const item = record.get("i");
+                                    const rel = record.get("r");
+
+                                    const itemId = item.identity.toInt();
+                                    const relId = rel.identity.toInt();
+
+                                    // 添加非遗项目节点
+                                    if (!network.body.data.nodes.get(itemId)) {
+                                        network.body.data.nodes.add({
+                                            id: itemId,
+                                            label: item.properties.name,
+                                            group: 'Title',
+                                            color: {
+                                                background: "rgba(141, 167, 215, 0.8)",
+                                                border: "#fff",
+                                                highlight: { background: "rgba(141, 167, 215, 1)", border: "#fff" }
+                                            },
+                                            font: {
+                                                size: 16,
+                                                color: "#fff",
+                                                face: "Noto Sans SC",
+                                                strokeWidth: 2,
+                                                strokeColor: "rgba(0, 0, 0, 0.8)"
+                                            },
+                                            size: 30
+                                        });
+                                    }
+
+                                    // 添加关系边
+                                    if (!network.body.data.edges.get(relId)) {
+                                        network.body.data.edges.add({
+                                            id: relId,
+                                            from: itemId,
+                                            to: nodeId,
+                                            color: {
+                                                color: "rgba(255, 255, 255, 0.3)",
+                                                highlight: "rgba(255, 255, 255, 0.8)"
+                                            },
+                                            arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+                                            smooth: {
+                                                type: "continuous",
+                                                roundness: 0.5
+                                            }
+                                        });
+                                    }
+                                });
+
+                                console.log("✅ 追加非遗项目数:", result.records.length);
+
+                                // 聚焦到点击的节点
+                                network.focus(nodeId, {
+                                    scale: 1,
+                                    animation: {
+                                        duration: 1000,
+                                        easingFunction: 'easeInOutQuad'
+                                    }
+                                });
+
+                                // 等动画完成后，适当缩放以显示所有相关节点
+                                setTimeout(() => {
+                                    const connectedNodes = network.getConnectedNodes(nodeId);
+                                    if (connectedNodes.length > 0) {
+                                        network.fit({
+                                            nodes: [nodeId, ...connectedNodes],
+                                            animation: {
+                                                duration: 1000,
+                                                easingFunction: 'easeOutQuart'
+                                            }
+                                        });
+                                    }
+                                }, 1200);
+
+                            } catch (error) {
+                                console.error("❌ 查询出错:", error);
+                            } finally {
+                                session.close();
+                                driver.close();
+                            }
+                        }
+                    } else {
+                        console.warn("⚠️ 双击未命中节点！");
+                    }
+                });
+
+                // 添加单击事件处理
+                network.on("click", function (params) {
+                    if (params.nodes.length > 0) {
+                        const nodeId = params.nodes[0];
+                        // 聚焦到点击的节点
+                        network.focus(nodeId, {
+                            scale: 1,
+                            animation: {
+                                duration: 1000,
+                                easingFunction: 'easeInOutQuad'
+                            }
+                        });
+                    }
+                });
+            });
+
+            viz.render();
+        });
+    </script>
+
+</body>
+
+</html>

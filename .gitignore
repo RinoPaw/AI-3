@@ -1,0 +1,47 @@
+# Python cache / build artifacts
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE / OS files
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Local runtime / temp data
+tmp/
+temp/
+*.tmp
+
+# Model and heavy binary assets
+models/
+*.bin
+*.onnx
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+data/faiss_data/faiss_index.index
+
+# Optional: generated media frames (uncomment if needed)
+# process/*/
+# process/*/*/
+
+# Local secrets / environment
+.env
+.env.*
+!.env.example
