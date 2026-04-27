@@ -179,4 +179,4 @@ ZHIPU_API_KEY = _env("ZHIPU_API_KEY", "")
 ZHIPU_MODEL = _env("ZHIPU_MODEL", "glm-4.5-flash")
 
 # 知识图谱
-HTML_PATH = _env_path("HTML_PATH", "heritage/heritage/templates/index.html")
+HTML_PATH = _env_path("HTML_PATH", "heritage/templates/index.html")
