@@ -66,7 +66,7 @@ This project uses `json` file to configure the site content, the configuration i
     ],
     "github": "imsyy", //Github username
     "qq": "1539250352", //QQ
-    "email": "one@imsyy.top", //email email
+    "email": "", //email email
     "telegram": "bottom_user", //Telegram user name
     "twitter": "iimmsyy", //Twitter username
     "weather_api": "https://www.yiketianqi.com", //Weather API

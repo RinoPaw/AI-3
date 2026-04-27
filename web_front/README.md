@@ -65,7 +65,7 @@
     ],
     "github": "imsyy", //Github 用户名
     "qq": "1539250352", //QQ
-    "email": "one@imsyy.top", //Email电子邮件
+    "email": "", //Email电子邮件
     "telegram": "bottom_user", //Telegram 用户名
     "twitter": "iimmsyy", //Twitter用户名
     "weather_api": "https://www.yiketianqi.com", //天气 API
