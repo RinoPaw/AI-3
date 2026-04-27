@@ -112,16 +112,16 @@ panda_mudan/
 │   └── animations/         # 数字人动画帧与视频资源
 ├── data/                   # 检索数据、索引元数据和辅助文本
 │   └── faiss_data/
-│       ├── faiss_data.json       # 已提交：FAISS 对应文本数据
-│       ├── my_keywords.json      # 已提交：关键词数据
-│       └── faiss_index.index     # 未上传 GitHub：需手动下载或重新生成
-├── models/                 # 未上传 GitHub：需手动下载本地模型文件
+│       ├── faiss_data.json       # FAISS 对应文本数据
+│       ├── my_keywords.json      # 关键词数据
+│       └── faiss_index.index     # 需下载或重新生成
+├── models/                 # 需下载本地模型文件
 ├── web/
 │   ├── heritage/           # 知识图谱 Flask 页面
 │   └── front/              # Web 前端展示资源
 ├── scripts/                # 测试脚本与工具脚本
-├── .env.example            # 配置模板，已提交
-├── .env                    # 未上传 GitHub：本地复制 .env.example 后填写
+├── .env.example            # 配置模板
+├── .env                    # 本地配置，按 .env.example 创建
 ├── requirements.txt
 └── README.MD
 ```
