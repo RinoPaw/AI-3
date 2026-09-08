@@ -1,47 +1,31 @@
-# Python cache / build artifacts
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
 *.py[cod]
 *.pyd
-*.so
-*.egg-info/
 .pytest_cache/
+*.egg-info/
 
 # Virtual environments
 .venv/
 venv/
 env/
 
-# IDE / OS files
+# Logs / temp
+logs/
+*.log
+tmp/
+temp/
+
+# IDE / OS
 .vscode/
 .idea/
-*.swp
 Thumbs.db
 .DS_Store
 
-# Logs
-logs/
-*.log
-
-# Local runtime / temp data
-tmp/
-temp/
-*.tmp
-
-# Model and heavy binary assets
-models/
-*.bin
-*.onnx
-*.pt
-*.pth
-*.ckpt
-*.safetensors
+# Generated FAISS index
 data/faiss_data/faiss_index.index
-
-# Optional: generated media frames (uncomment if needed)
-# assets/animations/*/
-# assets/animations/*/*/
-
-# Local secrets / environment
-.env
-.env.*
-!.env.example
