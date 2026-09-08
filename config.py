@@ -122,4 +122,3 @@ DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 DEEPSEEK_TIMEOUT = float(os.getenv("DEEPSEEK_TIMEOUT", "10.0"))
 
 # 知识图谱
-HTML_PATH = resource_path("heritage/heritage/templates/index.html")

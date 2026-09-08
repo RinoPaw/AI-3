@@ -10,7 +10,6 @@ boot_log("before pygame")
 import pygame
 boot_log("after pygame")
 import math
-import webbrowser
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -58,7 +57,6 @@ from config import (
     ICON_CLOSE,
     logger,
     BACKGROUND_IMAGE,
-    HTML_PATH,
 )
 
 from asr.manager import ASRManager
@@ -632,30 +630,6 @@ class MainWindow(QMainWindow):
             (self.rotating_width - scroll_width) // 2,
             (self.rotating_height - scroll_height) // 2
         )
-            # === 添加小按钮到左侧布局最下方 ===
-        # 创建一个小按钮
-        self.small_button = QPushButton("河南非遗图", self.left_panel)
-        self.small_button.setStyleSheet("""
-            QPushButton {
-                background-color: rgb(166, 27, 41);
-                color: white;
-                border-radius: 15px;
-                font-size: 16px;
-                margin: 10px;
-            }
-            QPushButton:hover {
-                background-color: rgb(130, 17, 31);
-            }
-            QPushButton:pressed {
-                background-color: rgb(75, 30, 47); 
-            }                            
-        """)
-
-        self.small_button.setFixedSize(150, 50)  # 设置按钮大小
-        left_layout.addWidget(self.small_button, alignment=Qt.AlignBottom | Qt.AlignCenter)
-
-        # === 添加小按钮的槽函数 ===
-        self.small_button.clicked.connect(self.on_small_button_clicked)
 
         # 右侧视频区
         self.right_panel = QWidget()
@@ -1110,12 +1084,6 @@ class MainWindow(QMainWindow):
         logger.info(
             "Recognition stopped"
         )
-
-    def on_small_button_clicked(self):
-        logger.info("Start index.html")
-        webbrowser.open(f'file://{HTML_PATH}')
-
-    
 
     def on_interrupt_clicked(self):
         logger.info(
